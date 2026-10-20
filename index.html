@@ -1,0 +1,622 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>نظام إدارة المحل</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Reem+Kufi:wght@600&display=swap">
+<style>
+/* Layout: sticky header (name + 3 live figures + scrollable tabs), one working view below, two-column on wide screens */
+:root{
+  --bg:#f4f3ef; --surface:#ffffff; --ink:#1d2724; --muted:#66726d; --line:#dedcd3;
+  --accent:#0e6b5c; --accent-ink:#ffffff; --accent-soft:#dcefe9;
+  --good:#1e7a46; --good-soft:#dff1e6; --warn:#a65a05; --warn-soft:#fbebd2; --bad:#b3261e; --bad-soft:#f9dedb;
+  --font-body:'Cairo','Segoe UI',Tahoma,sans-serif; --font-display:'Reem Kufi','Cairo',Tahoma,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121816; --surface:#1b2320; --ink:#e8ede9; --muted:#93a19b; --line:#2c3733;
+  --accent:#3fb59f; --accent-ink:#0b1713; --accent-soft:#1d332e;
+  --good:#5cc98a; --good-soft:#1c3226; --warn:#e0a04a; --warn-soft:#3a2d16; --bad:#ef7b72; --bad-soft:#3d1f1c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121816; --surface:#1b2320; --ink:#e8ede9; --muted:#93a19b; --line:#2c3733;
+  --accent:#3fb59f; --accent-ink:#0b1713; --accent-soft:#1d332e;
+  --good:#5cc98a; --good-soft:#1c3226; --warn:#e0a04a; --warn-soft:#3a2d16; --bad:#ef7b72; --bad-soft:#3d1f1c; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 28px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:1100px;margin:0 auto}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--bg);padding-top:12px;border-bottom:1px solid var(--line)}
+.top{display:flex;gap:12px 20px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.brand{font-family:var(--font-display);font-size:22px;line-height:1.2;margin:0}
+.kpis{display:flex;gap:18px;flex-wrap:wrap}
+.kpi{display:flex;flex-direction:column;min-width:0}
+.kpi small{color:var(--muted);font-size:12px}
+.kpi b{font-size:17px;font-variant-numeric:tabular-nums}
+.tabs{display:flex;gap:4px;overflow-x:auto;margin-top:10px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{appearance:none;border:0;background:none;color:var(--muted);font:inherit;font-weight:600;padding:10px 14px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+main{padding-top:18px;display:flex;flex-direction:column;gap:16px}
+h2{font-size:16px;margin:0 0 10px}
+h3{font-size:14px;margin:14px 0 6px;color:var(--muted)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;min-width:0}
+.grid2{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;align-items:start}
+@media (max-width:820px){.grid2{grid-template-columns:1fr}}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+.row>*{min-width:0}
+.field{display:flex;flex-direction:column;gap:4px;flex:1 1 130px}
+.field label{font-size:12px;color:var(--muted);font-weight:600}
+input,select,textarea,button{font:inherit;color:inherit}
+input,select,textarea{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px;min-height:44px;font-size:16px;width:100%;min-width:0}
+textarea{min-height:110px;font-size:13px;direction:ltr;text-align:left}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.btn{appearance:none;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 16px;min-height:44px;font-weight:600;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.danger{color:var(--bad)}
+.btn.danger[data-armed]{background:var(--bad);color:#fff;border-color:var(--bad)}
+.btn.small{min-height:34px;padding:4px 10px;font-size:13px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.chip{appearance:none;border:1px solid var(--line);background:var(--bg);border-radius:99px;padding:4px 12px;font-size:13px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+.results{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;max-height:520px;overflow-y:auto}
+.res{text-align:start;appearance:none;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:9px 11px;cursor:pointer;display:flex;flex-direction:column;gap:2px;min-width:0}
+.res:hover{border-color:var(--accent)}
+.res b{font-size:14px;overflow-wrap:anywhere}
+.res span{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.res .pr{display:flex;justify-content:space-between;gap:6px;align-items:center;margin-top:3px}
+.res .pr strong{font-variant-numeric:tabular-nums;color:var(--accent)}
+.pill{display:inline-block;border-radius:99px;padding:1px 9px;font-size:12px;font-weight:600;white-space:nowrap}
+.pill.ok{background:var(--good-soft);color:var(--good)}
+.pill.low{background:var(--warn-soft);color:var(--warn)}
+.pill.out{background:var(--bad-soft);color:var(--bad)}
+.line{display:grid;grid-template-columns:1fr auto;gap:6px 10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.line:last-child{border-bottom:0}
+.line .nm{font-weight:600;overflow-wrap:anywhere}
+.line .nm small{display:block;color:var(--muted);font-weight:400}
+.line .ctl{grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.line .ctl input{width:92px;min-height:38px;padding:4px 8px}
+.step{display:flex;align-items:center;gap:2px}
+.step button{width:38px;min-height:38px;padding:0;font-size:18px}
+.step span{min-width:30px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+.total{display:flex;justify-content:space-between;align-items:baseline;font-size:20px;font-weight:700;padding:12px 0 8px;font-variant-numeric:tabular-nums}
+.empty{color:var(--muted);padding:14px 0;text-align:center}
+.tblw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th{font-size:12px;color:var(--muted);text-align:start;font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+td small{display:block;color:var(--muted)}
+td.num,th.num{text-align:end}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.card{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--surface);min-width:0}
+.card small{color:var(--muted);display:block}
+.card b{font-size:21px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.card.hl{border-color:var(--accent);background:var(--accent-soft)}
+.pos{color:var(--good)} .neg{color:var(--bad)}
+.bars{display:flex;align-items:flex-end;gap:3px;height:150px;border-bottom:1px solid var(--line);padding-top:18px;overflow-x:auto}
+.bar{flex:1 0 14px;min-width:14px;background:var(--accent);border-radius:3px 3px 0 0;position:relative;min-height:2px}
+.bar.peak::after{content:attr(data-v);position:absolute;top:-17px;inset-inline-start:0;font-size:11px;color:var(--muted);white-space:nowrap}
+.axis{display:flex;gap:3px;color:var(--muted);font-size:11px;overflow:hidden}
+.axis span{flex:1 0 14px;min-width:14px;text-align:center}
+.hbar{display:grid;grid-template-columns:minmax(90px,1.2fr) 2fr auto;gap:8px;align-items:center;padding:5px 0;font-size:14px}
+.hbar i{display:block;height:9px;border-radius:5px;background:var(--accent);min-width:2px}
+.hbar span:first-child{overflow-wrap:anywhere}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:30;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:max(16px,env(safe-area-inset-top,0px)) 16px 16px}
+.modal .panel{width:min(560px,100%);margin-top:8px}
+.toast{position:fixed;inset-inline:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));margin:auto;width:max-content;max-width:calc(100% - 32px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:99px;z-index:40;font-weight:600}
+.notice{background:var(--warn-soft);color:var(--warn);border-radius:8px;padding:9px 12px;font-size:14px}
+.muted{color:var(--muted)}
+.hint{font-size:13px;color:var(--muted);margin:6px 0 0}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+@media (prefers-reduced-motion:no-preference){.tab,.btn,.res{transition:border-color .15s,background .15s}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="top">
+      <h1 class="brand" id="shopname"></h1>
+      <div class="kpis" id="kpis"></div>
+    </div>
+    <nav class="tabs" role="tablist" id="tabs"></nav>
+  </header>
+  <main id="main"></main>
+</div>
+<div id="layer"></div>
+
+<script>
+const SEED = [{"code":"A1-001","cat":"شنط","name":"شنطة كتف حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":150,"open":1},{"code":"A1-002","cat":"شنط","name":"شنطة كتف حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":150,"open":1},{"code":"A1-003","cat":"شنط","name":"شنطة كتف حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":150,"open":1},{"code":"A1-004","cat":"شنط","name":"شنطة كتف حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":150,"open":1},{"code":"A1-005","cat":"شنط","name":"شنطة كتف حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":150,"open":1},{"code":"A1-006","cat":"شنط","name":"شنطة كتف حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":150,"open":1},{"code":"A1-007","cat":"شنط","name":"شنطة كتف حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":150,"open":1},{"code":"A1-008","cat":"شنط","name":"شنطة كتف حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":150,"open":1},{"code":"A1-009","cat":"شنط","name":"شنطة كتف حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":150,"open":1},{"code":"A1-010","cat":"شنط","name":"شنطة كتف حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":150,"open":1},{"code":"A1-011","cat":"شنط","name":"شنطة كتف حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":150,"open":1},{"code":"A1-012","cat":"شنط","name":"شنطة كتف حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":150,"open":1},{"code":"A1-013","cat":"شنط","name":"شنطة كتف حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":150,"open":1},{"code":"A1-014","cat":"شنط","name":"شنطة كتف حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":150,"open":1},{"code":"A1-015","cat":"شنط","name":"شنطة كتف حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":150,"open":1},{"code":"A1-016","cat":"شنط","name":"شنطة كتف حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":150,"open":1},{"code":"A1-017","cat":"شنط","name":"شنطة كتف حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":150,"open":1},{"code":"A1-018","cat":"شنط","name":"شنطة كتف حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":150,"open":1},{"code":"A2-001","cat":"شنط","name":"شنطة كتف حريمي","model":"محلي / لوكس","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":250,"sell":350,"open":1},{"code":"A2-002","cat":"شنط","name":"شنطة كتف حريمي","model":"محلي / لوكس","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":250,"sell":350,"open":1},{"code":"A2-003","cat":"شنط","name":"شنطة كتف حريمي","model":"محلي / لوكس","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":250,"sell":350,"open":1},{"code":"A2-004","cat":"شنط","name":"شنطة كتف حريمي","model":"محلي / لوكس","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":250,"sell":350,"open":1},{"code":"A2-005","cat":"شنط","name":"شنطة كتف حريمي","model":"محلي / لوكس","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":250,"sell":350,"open":1},{"code":"A2-006","cat":"شنط","name":"شنطة كتف حريمي","model":"محلي / لوكس","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":250,"sell":350,"open":1},{"code":"A2-007","cat":"شنط","name":"شنطة كتف حريمي","model":"محلي / لوكس","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":250,"sell":350,"open":1},{"code":"A2-008","cat":"شنط","name":"شنطة كتف حريمي","model":"محلي / لوكس","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":250,"sell":350,"open":1},{"code":"A2-009","cat":"شنط","name":"شنطة كتف حريمي","model":"محلي / لوكس","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":250,"sell":350,"open":1},{"code":"A2-010","cat":"شنط","name":"شنطة كتف حريمي","model":"محلي / لوكس","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":250,"sell":350,"open":1},{"code":"A2-011","cat":"شنط","name":"شنطة كتف حريمي","model":"محلي / لوكس","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":250,"sell":350,"open":1},{"code":"A2-012","cat":"شنط","name":"شنطة كتف حريمي","model":"محلي / لوكس","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":250,"sell":350,"open":1},{"code":"A3-001","cat":"شنط","name":"شنطة كتف حريمي","model":"مستورد / براند","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":350,"sell":500,"open":1},{"code":"A3-002","cat":"شنط","name":"شنطة كتف حريمي","model":"مستورد / براند","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":350,"sell":500,"open":1},{"code":"A3-003","cat":"شنط","name":"شنطة كتف حريمي","model":"مستورد / براند","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":350,"sell":500,"open":1},{"code":"A3-004","cat":"شنط","name":"شنطة كتف حريمي","model":"مستورد / براند","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":350,"sell":500,"open":1},{"code":"A3-005","cat":"شنط","name":"شنطة كتف حريمي","model":"مستورد / براند","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":350,"sell":500,"open":1},{"code":"A3-006","cat":"شنط","name":"شنطة كتف حريمي","model":"مستورد / براند","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":350,"sell":500,"open":1},{"code":"B1-001","cat":"شنط","name":"شنطة يد حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":120,"sell":200,"open":1},{"code":"B1-002","cat":"شنط","name":"شنطة يد حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":120,"sell":200,"open":1},{"code":"B1-003","cat":"شنط","name":"شنطة يد حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":120,"sell":200,"open":1},{"code":"B1-004","cat":"شنط","name":"شنطة يد حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":120,"sell":200,"open":1},{"code":"B1-005","cat":"شنط","name":"شنطة يد حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":120,"sell":200,"open":1},{"code":"B1-006","cat":"شنط","name":"شنطة يد حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":120,"sell":200,"open":1},{"code":"B1-007","cat":"شنط","name":"شنطة يد حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":120,"sell":200,"open":1},{"code":"B1-008","cat":"شنط","name":"شنطة يد حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":120,"sell":200,"open":1},{"code":"B1-009","cat":"شنط","name":"شنطة يد حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":120,"sell":200,"open":1},{"code":"B1-010","cat":"شنط","name":"شنطة يد حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":120,"sell":200,"open":1},{"code":"B1-011","cat":"شنط","name":"شنطة يد حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":120,"sell":200,"open":1},{"code":"B1-012","cat":"شنط","name":"شنطة يد حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":120,"sell":200,"open":1},{"code":"B2-001","cat":"شنط","name":"شنطة يد حريمي","model":"محلي / لوكس","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":250,"sell":350,"open":1},{"code":"B2-002","cat":"شنط","name":"شنطة يد حريمي","model":"محلي / لوكس","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":250,"sell":350,"open":1},{"code":"B2-003","cat":"شنط","name":"شنطة يد حريمي","model":"محلي / لوكس","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":250,"sell":350,"open":1},{"code":"B2-004","cat":"شنط","name":"شنطة يد حريمي","model":"محلي / لوكس","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":250,"sell":350,"open":1},{"code":"B2-005","cat":"شنط","name":"شنطة يد حريمي","model":"محلي / لوكس","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":250,"sell":350,"open":1},{"code":"B2-006","cat":"شنط","name":"شنطة يد حريمي","model":"محلي / لوكس","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":250,"sell":350,"open":1},{"code":"B2-007","cat":"شنط","name":"شنطة يد حريمي","model":"محلي / لوكس","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":250,"sell":350,"open":1},{"code":"B2-008","cat":"شنط","name":"شنطة يد حريمي","model":"محلي / لوكس","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":250,"sell":350,"open":1},{"code":"B2-009","cat":"شنط","name":"شنطة يد حريمي","model":"محلي / لوكس","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":250,"sell":350,"open":1},{"code":"B2-010","cat":"شنط","name":"شنطة يد حريمي","model":"محلي / لوكس","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":250,"sell":350,"open":1},{"code":"B2-011","cat":"شنط","name":"شنطة يد حريمي","model":"محلي / لوكس","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":250,"sell":350,"open":1},{"code":"B2-012","cat":"شنط","name":"شنطة يد حريمي","model":"محلي / لوكس","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":250,"sell":350,"open":1},{"code":"B3-001","cat":"شنط","name":"شنطة يد حريمي","model":"مستورد","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":450,"sell":600,"open":1},{"code":"B3-002","cat":"شنط","name":"شنطة يد حريمي","model":"مستورد","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":450,"sell":600,"open":1},{"code":"B3-003","cat":"شنط","name":"شنطة يد حريمي","model":"مستورد","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":450,"sell":600,"open":1},{"code":"B3-004","cat":"شنط","name":"شنطة يد حريمي","model":"مستورد","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":450,"sell":600,"open":1},{"code":"B3-005","cat":"شنط","name":"شنطة يد حريمي","model":"مستورد","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":450,"sell":600,"open":1},{"code":"B3-006","cat":"شنط","name":"شنطة يد حريمي","model":"مستورد","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":450,"sell":600,"open":1},{"code":"C1-001","cat":"بوكات","name":"بوك حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":45,"sell":100,"open":1},{"code":"C1-002","cat":"بوكات","name":"بوك حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":45,"sell":100,"open":1},{"code":"C1-003","cat":"بوكات","name":"بوك حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":45,"sell":100,"open":1},{"code":"C1-004","cat":"بوكات","name":"بوك حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":45,"sell":100,"open":1},{"code":"C1-005","cat":"بوكات","name":"بوك حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":45,"sell":100,"open":1},{"code":"C1-006","cat":"بوكات","name":"بوك حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":45,"sell":100,"open":1},{"code":"C1-007","cat":"بوكات","name":"بوك حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":45,"sell":100,"open":1},{"code":"C1-008","cat":"بوكات","name":"بوك حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":45,"sell":100,"open":1},{"code":"C1-009","cat":"بوكات","name":"بوك حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":45,"sell":100,"open":1},{"code":"C1-010","cat":"بوكات","name":"بوك حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":45,"sell":100,"open":1},{"code":"C1-011","cat":"بوكات","name":"بوك حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":45,"sell":100,"open":1},{"code":"C1-012","cat":"بوكات","name":"بوك حريمي","model":"شعبي","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":45,"sell":100,"open":1},{"code":"C2-001","cat":"بوكات","name":"بوك حريمي","model":"محلي  ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":200,"open":1},{"code":"C2-002","cat":"بوكات","name":"بوك حريمي","model":"محلي  ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":200,"open":1},{"code":"C2-003","cat":"بوكات","name":"بوك حريمي","model":"محلي  ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":200,"open":1},{"code":"C2-004","cat":"بوكات","name":"بوك حريمي","model":"محلي  ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":200,"open":1},{"code":"C2-005","cat":"بوكات","name":"بوك حريمي","model":"محلي  ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":200,"open":1},{"code":"C2-006","cat":"بوكات","name":"بوك حريمي","model":"محلي  ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":200,"open":1},{"code":"C2-007","cat":"بوكات","name":"بوك حريمي","model":"محلي  ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":200,"open":1},{"code":"C2-008","cat":"بوكات","name":"بوك حريمي","model":"محلي  ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":200,"open":1},{"code":"C2-009","cat":"بوكات","name":"بوك حريمي","model":"محلي  ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":200,"open":1},{"code":"C2-010","cat":"بوكات","name":"بوك حريمي","model":"محلي  ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":200,"open":1},{"code":"C2-011","cat":"بوكات","name":"بوك حريمي","model":"محلي  ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":200,"open":1},{"code":"C2-012","cat":"بوكات","name":"بوك حريمي","model":"محلي  ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":200,"open":1},{"code":"C2-013","cat":"بوكات","name":"بوك حريمي","model":"محلي  ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":200,"open":1},{"code":"C2-014","cat":"بوكات","name":"بوك حريمي","model":"محلي  ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":200,"open":1},{"code":"C2-015","cat":"بوكات","name":"بوك حريمي","model":"محلي  ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":200,"open":1},{"code":"C2-016","cat":"بوكات","name":"بوك حريمي","model":"محلي  ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":200,"open":1},{"code":"C2-017","cat":"بوكات","name":"بوك حريمي","model":"محلي  ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":200,"open":1},{"code":"C2-018","cat":"بوكات","name":"بوك حريمي","model":"محلي  ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":200,"open":1},{"code":"C2-019","cat":"بوكات","name":"بوك حريمي","model":"محلي  ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":200,"open":1},{"code":"C2-020","cat":"بوكات","name":"بوك حريمي","model":"محلي  ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":200,"open":1},{"code":"C2-021","cat":"بوكات","name":"بوك حريمي","model":"محلي  ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":200,"open":1},{"code":"C2-022","cat":"بوكات","name":"بوك حريمي","model":"محلي  ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":200,"open":1},{"code":"C2-023","cat":"بوكات","name":"بوك حريمي","model":"محلي  ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":200,"open":1},{"code":"C2-024","cat":"بوكات","name":"بوك حريمي","model":"محلي  ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":100,"sell":200,"open":1},{"code":"C3-001","cat":"بوكات","name":"بوك حريمي","model":"مستورد ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":150,"sell":250,"open":1},{"code":"C3-002","cat":"بوكات","name":"بوك حريمي","model":"مستورد ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":150,"sell":250,"open":1},{"code":"C3-003","cat":"بوكات","name":"بوك حريمي","model":"مستورد ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":150,"sell":250,"open":1},{"code":"C3-004","cat":"بوكات","name":"بوك حريمي","model":"مستورد ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":150,"sell":250,"open":1},{"code":"C3-005","cat":"بوكات","name":"بوك حريمي","model":"مستورد ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":150,"sell":250,"open":1},{"code":"C3-006","cat":"بوكات","name":"بوك حريمي","model":"مستورد ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":150,"sell":250,"open":1},{"code":"C3-007","cat":"بوكات","name":"بوك حريمي","model":"مستورد ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":150,"sell":250,"open":1},{"code":"C3-008","cat":"بوكات","name":"بوك حريمي","model":"مستورد ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":150,"sell":250,"open":1},{"code":"C3-009","cat":"بوكات","name":"بوك حريمي","model":"مستورد ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":150,"sell":250,"open":1},{"code":"C3-010","cat":"بوكات","name":"بوك حريمي","model":"مستورد ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":150,"sell":250,"open":1},{"code":"C3-011","cat":"بوكات","name":"بوك حريمي","model":"مستورد ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":150,"sell":250,"open":1},{"code":"C3-012","cat":"بوكات","name":"بوك حريمي","model":"مستورد ","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":150,"sell":250,"open":1},{"code":"D1-001","cat":"إكسسوارات","name":"كارت حلقان","model":"إكريليك وراتنج","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":10,"sell":25,"open":30},{"code":"D2-001","cat":"إكسسوارات","name":"كارت كلبسات ","model":"إكريليك وراتنج","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":10,"sell":25,"open":30},{"code":"D3-001","cat":"إكسسوارات","name":"كارت سلاسل","model":"ستانلس ستيل","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":20,"sell":50,"open":30},{"code":"D4-001","cat":"إكسسوارات","name":"كارت طقم خواتم","model":"ستانلس ستيل","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":20,"sell":50,"open":30},{"code":"D5-001","cat":"إكسسوارات","name":"كارت طقم توينز","model":"ذهب صيني وزركون","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":30,"sell":100,"open":30},{"code":"D6-001","cat":"إكسسوارات","name":"كارت حلق إكسبينج كبير","model":"ذهب صيني وزركون","size":"","color":"أشكال مختلفة","unit":"قطعة","buy":30,"sell":100,"open":30}];
+const KEY = 'shop_system_v1';
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = n => (Math.round((+n || 0) * 100) / 100).toLocaleString('en-US');
+const pad = n => String(n).padStart(2, '0');
+const iso = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const today = () => iso(new Date());
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const norm = s => String(s ?? '').toLowerCase().replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/[ً-ْ]/g, '');
+const $ = (s, r = document) => r.querySelector(s);
+const main = $('#main');
+const TYPES = ['إيجار', 'كهرباء', 'مواصلات', 'أكياس وتغليف', 'مرتبات', 'أخرى'];
+
+let db, storageOK = true;
+const fresh = () => ({ v: 1, shop: 'نظام إدارة المحل', low: 0, items: SEED.map(i => ({ ...i })), sales: [], purchases: [], expenses: [], lastBackup: '' });
+function load() {
+  try { const r = localStorage.getItem(KEY); if (r) { db = JSON.parse(r); return; } } catch (e) { storageOK = false; }
+  db = fresh();
+}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) { storageOK = false; }
+  refreshHeader();
+}
+load();
+
+/* ---------- derived data ---------- */
+function stockMap() {
+  const m = {};
+  db.items.forEach(i => m[i.code] = +i.open || 0);
+  db.purchases.forEach(p => { if (p.code in m) m[p.code] += +p.qty; });
+  db.sales.forEach(s => { if (s.code in m) m[s.code] -= +s.qty; });
+  return m;
+}
+const itemBy = code => db.items.find(i => i.code === code);
+const status = st => st <= 0 ? 'out' : st <= db.low ? 'low' : 'ok';
+const statusTxt = { out: 'نفد', low: 'يحتاج شراء', ok: 'متوفر' };
+const pillFor = st => `<span class="pill ${status(st)}">${statusTxt[status(st)]}</span>`;
+const itemLabel = i => i ? `${i.name}${i.model ? ' - ' + i.model.trim() : ''}${i.size ? ' - ' + i.size : ''}` : '';
+const nameOf = code => { const i = itemBy(code); return i ? itemLabel(i) : code + ' (محذوف)'; };
+const saleTotal = s => (+s.qty) * (+s.price);
+
+function refreshHeader() {
+  $('#shopname').textContent = db.shop;
+  document.title = db.shop;
+  const t = today(), sm = stockMap();
+  const ts = db.sales.filter(s => s.date === t);
+  const sales = ts.reduce((a, s) => a + saleTotal(s), 0);
+  const profit = ts.reduce((a, s) => a + (s.price - s.cost) * s.qty, 0);
+  const need = db.items.filter(i => status(sm[i.code]) !== 'ok').length;
+  $('#kpis').innerHTML = `
+    <div class="kpi"><small>مبيعات اليوم</small><b>${fmt(sales)} ج</b></div>
+    <div class="kpi"><small>ربح اليوم</small><b class="${profit >= 0 ? 'pos' : 'neg'}">${fmt(profit)} ج</b></div>
+    <div class="kpi"><small>أصناف تحتاج شراء</small><b>${need}</b></div>`;
+}
+
+function toast(msg) {
+  document.querySelectorAll('.toast').forEach(x => x.remove());
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg; t.setAttribute('role', 'status');
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2400);
+}
+function armed(b, label) {
+  if (b.dataset.armed) return true;
+  b.dataset.armed = '1'; b.dataset.old = b.textContent; b.textContent = label || 'اضغط للتأكيد';
+  setTimeout(() => { if (b.isConnected && b.dataset.armed) { delete b.dataset.armed; b.textContent = b.dataset.old; } }, 3000);
+  return false;
+}
+async function copyText(text, okMsg) {
+  try { await navigator.clipboard.writeText(text); toast(okMsg || 'تم النسخ'); return true; }
+  catch (e) { return false; }
+}
+
+/* ---------- tabs ---------- */
+const TABS = [['sales', 'بيع'], ['purchases', 'مشتريات'], ['stock', 'المخزون'], ['expenses', 'مصروفات'], ['reports', 'التقارير'], ['settings', 'نسخ احتياطي وإعدادات']];
+let tab = 'sales';
+function renderTabs() {
+  $('#tabs').innerHTML = TABS.map(([k, n]) => `<button class="tab" role="tab" data-act="tab" data-k="${k}" aria-selected="${k === tab}">${n}</button>`).join('');
+}
+function go(k) {
+  tab = k; renderTabs();
+  ({ sales: viewSales, purchases: viewPurchases, stock: viewStock, expenses: viewExpenses, reports: viewReports, settings: viewSettings })[k]();
+  window.scrollTo(0, 0);
+}
+
+/* ---------- SALES ---------- */
+let cart = [], saleCat = '';
+function viewSales() {
+  const cats = [...new Set(db.items.map(i => i.cat).filter(Boolean))];
+  main.innerHTML = `
+  <div class="grid2">
+    <section class="panel">
+      <h2>اختر الصنف</h2>
+      <input id="q" type="search" placeholder="ابحث بالاسم أو الكود أو الموديل" autocomplete="off">
+      <div class="chips" id="cats">
+        <button class="chip" data-act="salecat" data-c="" aria-pressed="${saleCat === ''}">الكل</button>
+        ${cats.map(c => `<button class="chip" data-act="salecat" data-c="${esc(c)}" aria-pressed="${saleCat === c}">${esc(c)}</button>`).join('')}
+      </div>
+      <div class="results" id="results"></div>
+    </section>
+    <section class="panel">
+      <h2>فاتورة البيع</h2>
+      <div id="cart"></div>
+      <div class="field" style="margin-top:8px"><label for="sdate">تاريخ البيع</label><input id="sdate" type="date" value="${today()}"></div>
+      <div class="actions"><button class="btn primary" data-act="sell" style="flex:1">تسجيل البيع</button><button class="btn" data-act="clearcart">مسح</button></div>
+    </section>
+  </div>
+  <section class="panel"><h2>آخر المبيعات</h2><div id="recent"></div></section>`;
+  $('#q').addEventListener('input', renderResults);
+  renderResults(); renderCart(); renderRecentSales();
+}
+function renderResults() {
+  const terms = norm($('#q').value).split(/\s+/).filter(Boolean);
+  const sm = stockMap();
+  let list = db.items.filter(i => (!saleCat || i.cat === saleCat) &&
+    terms.every(t => norm([i.code, i.name, i.model, i.cat, i.color, i.size].join(' ')).includes(t)));
+  const total = list.length;
+  list = list.slice(0, 48);
+  $('#results').innerHTML = list.length ? list.map(i => `
+    <button class="res" data-act="add" data-code="${esc(i.code)}">
+      <b>${esc(i.name)}</b>
+      <span>${esc((i.model || '').trim())}${i.size ? ' · ' + esc(i.size) : ''}${i.color ? ' · ' + esc(i.color) : ''}</span>
+      <span>${esc(i.code)}</span>
+      <div class="pr"><strong>${fmt(i.sell)} ج</strong>${pillFor(sm[i.code])} <span>${sm[i.code]}</span></div>
+    </button>`).join('') + (total > list.length ? `<div class="hint">يظهر ${list.length} من ${total}. اكتب أكتر للتحديد.</div>` : '')
+    : '<div class="empty">مفيش صنف بالاسم ده.</div>';
+}
+function renderCart() {
+  const sm = stockMap();
+  if (!cart.length) { $('#cart').innerHTML = '<div class="empty">اضغط على صنف علشان يتضاف للفاتورة.</div>'; return; }
+  const sum = cart.reduce((a, l) => a + l.qty * l.price, 0);
+  $('#cart').innerHTML = cart.map((l, n) => {
+    const i = itemBy(l.code);
+    const over = (sm[l.code] ?? 0) < l.qty;
+    return `<div class="line">
+      <div class="nm">${esc(itemLabel(i))}<small>${esc(l.code)}${over ? ' · <span class="neg">أكبر من الرصيد (' + (sm[l.code] ?? 0) + ')</span>' : ''}</small></div>
+      <div><b>${fmt(l.qty * l.price)}</b></div>
+      <div class="ctl">
+        <div class="step"><button class="btn" data-act="qty" data-n="${n}" data-d="-1" aria-label="أنقص">−</button><span>${l.qty}</span><button class="btn" data-act="qty" data-n="${n}" data-d="1" aria-label="زوّد">+</button></div>
+        <input type="number" inputmode="decimal" min="0" value="${l.price}" data-act-input="price" data-n="${n}" aria-label="سعر البيع">
+        <button class="btn small danger" data-act="rmline" data-n="${n}">شيل</button>
+      </div></div>`;
+  }).join('') + `<div class="total"><span>الإجمالي</span><span>${fmt(sum)} ج</span></div>`;
+}
+function renderRecentSales() {
+  const byInv = {};
+  [...db.sales].reverse().forEach(s => { (byInv[s.inv] ||= []).push(s); });
+  const invs = Object.values(byInv).slice(0, 12);
+  $('#recent').innerHTML = invs.length ? invs.map(ls => {
+    const sum = ls.reduce((a, s) => a + saleTotal(s), 0);
+    return `<div class="line"><div class="nm">${ls.map(s => `${esc(nameOf(s.code))} × ${s.qty}`).join('<br>')}<small>${ls[0].date}</small></div>
+      <div style="text-align:end"><b>${fmt(sum)} ج</b><br><button class="btn small danger" data-act="delsale" data-inv="${esc(ls[0].inv)}">حذف</button></div></div>`;
+  }).join('') : '<div class="empty">لسه مفيش مبيعات متسجلة.</div>';
+}
+
+/* ---------- PURCHASES ---------- */
+function viewPurchases() {
+  main.innerHTML = `
+  <section class="panel">
+    <h2>تسجيل مشتريات</h2>
+    <div class="row">
+      <div class="field" style="flex:2 1 260px"><label for="pitem">الصنف</label>
+        <input id="pitem" list="itemlist" placeholder="اكتب الكود أو الاسم واختار" autocomplete="off"></div>
+      <div class="field" style="flex:0 1 100px"><label for="pqty">الكمية</label><input id="pqty" type="number" inputmode="numeric" min="1" value="1"></div>
+      <div class="field" style="flex:0 1 130px"><label for="pcost">سعر الشراء للقطعة</label><input id="pcost" type="number" inputmode="decimal" min="0"></div>
+      <div class="field" style="flex:0 1 160px"><label for="pdate">التاريخ</label><input id="pdate" type="date" value="${today()}"></div>
+    </div>
+    <datalist id="itemlist">${db.items.map(i => `<option value="${esc(i.code)} — ${esc(itemLabel(i))}"></option>`).join('')}</datalist>
+    <label class="hint" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="pupd" checked style="width:auto;min-height:0"> اعتمد السعر ده كسعر شراء جديد للصنف</label>
+    <div class="actions"><button class="btn primary" data-act="buy">تسجيل الشراء</button></div>
+  </section>
+  <section class="panel"><h2>آخر المشتريات</h2><div id="recent"></div></section>`;
+  $('#pitem').addEventListener('input', () => {
+    const i = itemBy($('#pitem').value.split(' — ')[0].trim());
+    if (i) $('#pcost').value = i.buy;
+  });
+  renderRecentPurchases();
+}
+function renderRecentPurchases() {
+  const ps = [...db.purchases].reverse().slice(0, 15);
+  $('#recent').innerHTML = ps.length ? ps.map(p => `<div class="line"><div class="nm">${esc(nameOf(p.code))}<small>${p.date} · ${esc(p.code)}</small></div>
+    <div style="text-align:end"><b>${p.qty} × ${fmt(p.cost)}</b><br><button class="btn small danger" data-act="delbuy" data-id="${p.id}">حذف</button></div></div>`).join('')
+    : '<div class="empty">لسه مفيش مشتريات متسجلة.</div>';
+}
+
+/* ---------- STOCK ---------- */
+let stockQ = '', stockCat = '', stockSt = '';
+function viewStock() {
+  const cats = [...new Set(db.items.map(i => i.cat).filter(Boolean))];
+  main.innerHTML = `
+  <div class="cards" id="stockcards"></div>
+  <section class="panel">
+    <div class="row">
+      <div class="field" style="flex:2 1 200px"><label for="sq">بحث</label><input id="sq" type="search" value="${esc(stockQ)}" placeholder="الاسم أو الكود" autocomplete="off"></div>
+      <div class="field"><label for="scat">التصنيف</label><select id="scat"><option value="">الكل</option>${cats.map(c => `<option ${c === stockCat ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select></div>
+      <div class="field"><label for="sst">الحالة</label><select id="sst">
+        <option value="">الكل</option><option value="need" ${stockSt === 'need' ? 'selected' : ''}>تحتاج شراء أو نفدت</option><option value="out" ${stockSt === 'out' ? 'selected' : ''}>نفدت</option><option value="ok" ${stockSt === 'ok' ? 'selected' : ''}>متوفرة</option></select></div>
+      <button class="btn primary" data-act="newitem">+ صنف جديد</button>
+    </div>
+    <div class="tblw" style="margin-top:10px"><table><thead><tr><th>الصنف</th><th class="num">البيع</th><th class="num">الرصيد</th><th>الحالة</th><th></th></tr></thead><tbody id="stockrows"></tbody></table></div>
+  </section>`;
+  $('#sq').addEventListener('input', e => { stockQ = e.target.value; renderStockRows(); });
+  $('#scat').addEventListener('change', e => { stockCat = e.target.value; renderStockRows(); });
+  $('#sst').addEventListener('change', e => { stockSt = e.target.value; renderStockRows(); });
+  renderStockRows();
+}
+function renderStockRows() {
+  const sm = stockMap(), terms = norm(stockQ).split(/\s+/).filter(Boolean);
+  const all = db.items;
+  const value = all.reduce((a, i) => a + Math.max(0, sm[i.code]) * i.buy, 0);
+  const potential = all.reduce((a, i) => a + Math.max(0, sm[i.code]) * i.sell, 0);
+  const pieces = all.reduce((a, i) => a + Math.max(0, sm[i.code]), 0);
+  const need = all.filter(i => status(sm[i.code]) !== 'ok').length;
+  $('#stockcards').innerHTML = `
+    <div class="card hl"><small>قيمة المخزون (بسعر الشراء)</small><b>${fmt(value)} ج</b></div>
+    <div class="card"><small>قيمته لو اتباع كله</small><b>${fmt(potential)} ج</b></div>
+    <div class="card"><small>عدد القطع</small><b>${fmt(pieces)}</b></div>
+    <div class="card"><small>تحتاج شراء أو نفدت</small><b class="${need ? 'neg' : ''}">${need}</b></div>`;
+  const list = all.filter(i => (!stockCat || i.cat === stockCat) &&
+    (!stockSt || (stockSt === 'need' ? status(sm[i.code]) !== 'ok' : status(sm[i.code]) === stockSt)) &&
+    terms.every(t => norm([i.code, i.name, i.model, i.color, i.size].join(' ')).includes(t)));
+  $('#stockrows').innerHTML = list.length ? list.map(i => `<tr>
+    <td><b>${esc(itemLabel(i))}</b><small>${esc(i.code)} · ${esc(i.cat)} · شراء ${fmt(i.buy)} · ربح ${fmt(i.sell - i.buy)}</small></td>
+    <td class="num">${fmt(i.sell)}</td><td class="num"><b>${sm[i.code]}</b></td><td>${pillFor(sm[i.code])}</td>
+    <td><button class="btn small" data-act="edititem" data-code="${esc(i.code)}">تعديل</button></td></tr>`).join('')
+    : '<tr><td colspan="5" class="empty">مفيش أصناف مطابقة.</td></tr>';
+}
+function itemForm(i) {
+  const isNew = !i;
+  i = i || { code: '', cat: '', name: '', model: '', size: '', color: '', unit: 'قطعة', buy: 0, sell: 0, open: 0 };
+  const cats = [...new Set(db.items.map(x => x.cat).filter(Boolean))];
+  $('#layer').innerHTML = `<div class="modal" data-act="closemodal"><div class="panel" role="dialog" aria-label="بيانات الصنف">
+    <h2>${isNew ? 'صنف جديد' : 'تعديل الصنف'}</h2>
+    <div class="row">
+      <div class="field"><label for="f_code">الكود</label><input id="f_code" value="${esc(i.code)}" ${isNew ? '' : 'readonly'}></div>
+      <div class="field"><label for="f_cat">التصنيف</label><input id="f_cat" list="catlist" value="${esc(i.cat)}"><datalist id="catlist">${cats.map(c => `<option value="${esc(c)}">`).join('')}</datalist></div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <div class="field" style="flex:2 1 180px"><label for="f_name">اسم الصنف</label><input id="f_name" value="${esc(i.name)}"></div>
+      <div class="field"><label for="f_model">الموديل / الشكل</label><input id="f_model" value="${esc((i.model || '').trim())}"></div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <div class="field"><label for="f_size">المقاس</label><input id="f_size" value="${esc(i.size)}"></div>
+      <div class="field"><label for="f_color">اللون</label><input id="f_color" value="${esc(i.color)}"></div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <div class="field"><label for="f_buy">سعر الشراء</label><input id="f_buy" type="number" inputmode="decimal" value="${i.buy}"></div>
+      <div class="field"><label for="f_sell">سعر البيع</label><input id="f_sell" type="number" inputmode="decimal" value="${i.sell}"></div>
+      <div class="field"><label for="f_open">رصيد أول المدة</label><input id="f_open" type="number" inputmode="numeric" value="${i.open}"></div>
+    </div>
+    <div class="actions">
+      <button class="btn primary" data-act="saveitem" data-new="${isNew ? 1 : 0}">حفظ</button>
+      <button class="btn" data-act="closemodal">إلغاء</button>
+      ${isNew ? '' : `<button class="btn danger" data-act="delitem" data-code="${esc(i.code)}" style="margin-inline-start:auto">حذف الصنف</button>`}
+    </div></div></div>`;
+  $('#f_' + (isNew ? 'code' : 'name')).focus();
+}
+
+/* ---------- EXPENSES ---------- */
+let expMonth = today().slice(0, 7);
+function viewExpenses() {
+  main.innerHTML = `
+  <section class="panel">
+    <h2>تسجيل مصروف</h2>
+    <div class="row">
+      <div class="field"><label for="etype">النوع</label><select id="etype">${TYPES.map(t => `<option>${t}</option>`).join('')}</select></div>
+      <div class="field"><label for="eamt">المبلغ</label><input id="eamt" type="number" inputmode="decimal" min="0"></div>
+      <div class="field"><label for="edate">التاريخ</label><input id="edate" type="date" value="${today()}"></div>
+      <div class="field" style="flex:2 1 180px"><label for="enote">ملاحظة</label><input id="enote" placeholder="اختياري"></div>
+      <button class="btn primary" data-act="addexp">تسجيل</button>
+    </div>
+  </section>
+  <section class="panel">
+    <div class="row" style="justify-content:space-between"><h2 style="margin:0">مصروفات الشهر</h2>
+      <div class="field" style="flex:0 1 180px"><label for="emonth">الشهر</label><input id="emonth" type="month" value="${expMonth}"></div></div>
+    <div id="explist"></div>
+  </section>`;
+  $('#emonth').addEventListener('change', e => { expMonth = e.target.value || expMonth; renderExpenses(); });
+  renderExpenses();
+}
+function renderExpenses() {
+  const list = db.expenses.filter(e => e.date.startsWith(expMonth)).sort((a, b) => b.date.localeCompare(a.date));
+  const total = list.reduce((a, e) => a + +e.amount, 0);
+  const by = {}; list.forEach(e => by[e.type] = (by[e.type] || 0) + +e.amount);
+  $('#explist').innerHTML = `<div class="total"><span>إجمالي المصروفات</span><span>${fmt(total)} ج</span></div>` +
+    (Object.keys(by).length ? `<div class="chips">${Object.entries(by).map(([k, v]) => `<span class="chip">${esc(k)}: ${fmt(v)}</span>`).join('')}</div>` : '') +
+    (list.length ? list.map(e => `<div class="line"><div class="nm">${esc(e.type)}<small>${e.date}${e.note ? ' · ' + esc(e.note) : ''}</small></div>
+      <div style="text-align:end"><b>${fmt(e.amount)}</b><br><button class="btn small danger" data-act="delexp" data-id="${e.id}">حذف</button></div></div>`).join('')
+      : '<div class="empty">مفيش مصروفات في الشهر ده.</div>');
+}
+
+/* ---------- REPORTS ---------- */
+let repPeriod = 'month', repFrom = '', repTo = '';
+function range() {
+  const now = new Date(), t = iso(now);
+  if (repPeriod === 'today') return [t, t];
+  if (repPeriod === 'week') { const d = new Date(now); d.setDate(d.getDate() - 6); return [iso(d), t]; }
+  if (repPeriod === 'month') return [t.slice(0, 7) + '-01', t];
+  if (repPeriod === 'last') { const a = new Date(now.getFullYear(), now.getMonth() - 1, 1), b = new Date(now.getFullYear(), now.getMonth(), 0); return [iso(a), iso(b)]; }
+  if (repPeriod === 'custom') return [repFrom || '0000-00-00', repTo || '9999-99-99'];
+  return ['0000-00-00', '9999-99-99'];
+}
+function viewReports() {
+  const opts = [['today', 'النهارده'], ['week', 'آخر 7 أيام'], ['month', 'الشهر ده'], ['last', 'الشهر اللي فات'], ['all', 'كل الفترة'], ['custom', 'فترة محددة']];
+  main.innerHTML = `
+  <section class="panel"><div class="row">
+    <div class="field"><label for="rp">الفترة</label><select id="rp">${opts.map(([k, n]) => `<option value="${k}" ${k === repPeriod ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
+    <div class="field" ${repPeriod === 'custom' ? '' : 'hidden'} id="rfw"><label for="rf">من</label><input id="rf" type="date" value="${repFrom}"></div>
+    <div class="field" ${repPeriod === 'custom' ? '' : 'hidden'} id="rtw"><label for="rt">إلى</label><input id="rt" type="date" value="${repTo}"></div>
+  </div></section>
+  <div id="repbody" style="display:flex;flex-direction:column;gap:16px"></div>`;
+  $('#rp').addEventListener('change', e => { repPeriod = e.target.value; viewReports(); });
+  if (repPeriod === 'custom') {
+    $('#rf').addEventListener('change', e => { repFrom = e.target.value; renderReport(); });
+    $('#rt').addEventListener('change', e => { repTo = e.target.value; renderReport(); });
+  }
+  renderReport();
+}
+function renderReport() {
+  const [a, b] = range();
+  const S = db.sales.filter(s => s.date >= a && s.date <= b);
+  const E = db.expenses.filter(e => e.date >= a && e.date <= b);
+  const sales = S.reduce((x, s) => x + saleTotal(s), 0);
+  const cogs = S.reduce((x, s) => x + s.qty * s.cost, 0);
+  const exp = E.reduce((x, e) => x + +e.amount, 0);
+  const gross = sales - cogs, net = gross - exp;
+  const invs = new Set(S.map(s => s.inv)).size, pieces = S.reduce((x, s) => x + +s.qty, 0);
+
+  const group = (keyFn, valFn) => { const m = {}; S.forEach(s => { const k = keyFn(s); m[k] = (m[k] || 0) + valFn(s); }); return Object.entries(m).sort((x, y) => y[1] - x[1]); };
+  const top = group(s => s.code, s => +s.qty).slice(0, 8);
+  const cats = group(s => itemBy(s.code)?.cat || 'غير محدد', saleTotal);
+  const maxTop = top[0]?.[1] || 1, maxCat = cats[0]?.[1] || 1;
+
+  /* time series: days when the range is short, months otherwise */
+  const dates = S.map(s => s.date).sort();
+  let lo = a === '0000-00-00' ? (dates[0] || today()) : a, hi = b === '9999-99-99' ? (dates[dates.length - 1] || today()) : b;
+  const span = (new Date(hi) - new Date(lo)) / 864e5 + 1;
+  const monthly = span > 62;
+  const series = [];
+  if (monthly) {
+    let y = +lo.slice(0, 4), m = +lo.slice(5, 7);
+    while (y + '-' + pad(m) <= hi.slice(0, 7) && series.length < 60) { series.push([y + '-' + pad(m), 0]); m++; if (m > 12) { m = 1; y++; } }
+  } else {
+    for (let d = new Date(lo); iso(d) <= hi && series.length < 70; d.setDate(d.getDate() + 1)) series.push([iso(d), 0]);
+  }
+  const idx = {}; series.forEach((x, n) => idx[x[0]] = n);
+  S.forEach(s => { const k = monthly ? s.date.slice(0, 7) : s.date; if (k in idx) series[idx[k]][1] += saleTotal(s); });
+  const maxV = Math.max(...series.map(x => x[1]), 1);
+  const peak = series.reduce((p, x, n) => x[1] > series[p][1] ? n : p, 0);
+
+  $('#repbody').innerHTML = `
+  <div class="cards">
+    <div class="card"><small>المبيعات</small><b>${fmt(sales)} ج</b></div>
+    <div class="card"><small>تكلفة البضاعة المباعة</small><b>${fmt(cogs)} ج</b></div>
+    <div class="card"><small>مجمل الربح</small><b class="${gross >= 0 ? 'pos' : 'neg'}">${fmt(gross)} ج</b></div>
+    <div class="card"><small>المصروفات</small><b>${fmt(exp)} ج</b></div>
+    <div class="card hl"><small>صافي الربح</small><b class="${net >= 0 ? 'pos' : 'neg'}">${fmt(net)} ج</b></div>
+    <div class="card"><small>عدد الفواتير / القطع</small><b>${invs} / ${fmt(pieces)}</b></div>
+  </div>
+  <section class="panel"><h2>${monthly ? 'المبيعات بالشهر' : 'المبيعات باليوم'}</h2>
+    ${sales ? `<div class="bars" dir="ltr">${series.map(([k, v], n) => `<div class="bar ${n === peak && v ? 'peak' : ''}" data-v="${fmt(v)}" title="${k}: ${fmt(v)} ج" style="height:${Math.max(1, v / maxV * 100)}%"></div>`).join('')}</div>
+    <div class="axis" dir="ltr">${series.map(([k]) => `<span>${monthly ? k.slice(5) : k.slice(8)}</span>`).join('')}</div>` : '<div class="empty">مفيش مبيعات في الفترة دي.</div>'}</section>
+  <div class="grid2" style="grid-template-columns:1fr 1fr">
+    <section class="panel"><h2>أكتر الأصناف مبيعًا (بالعدد)</h2>${top.length ? top.map(([c, v]) => `<div class="hbar"><span>${esc(nameOf(c))}<br><small class="muted">${esc(c)}</small></span><i style="width:${v / maxTop * 100}%"></i><b>${v}</b></div>`).join('') : '<div class="empty">لا توجد بيانات.</div>'}</section>
+    <section class="panel"><h2>المبيعات حسب التصنيف</h2>${cats.length ? cats.map(([c, v]) => `<div class="hbar"><span>${esc(c)}</span><i style="width:${v / maxCat * 100}%"></i><b>${fmt(v)}</b></div>`).join('') : '<div class="empty">لا توجد بيانات.</div>'}</section>
+  </div>`;
+}
+
+/* ---------- SETTINGS / BACKUP ---------- */
+function viewSettings() {
+  const last = db.lastBackup ? `آخر نسخة احتياطية: ${db.lastBackup}` : 'لسه ماعملتش نسخة احتياطية.';
+  main.innerHTML = `
+  ${storageOK ? '' : '<div class="notice">المتصفح مش سامح بحفظ البيانات في الوضع ده. البيانات هتفضل شغالة لحد ما تقفل الصفحة، فخد نسخة احتياطية قبل ما تخرج.</div>'}
+  <section class="panel"><h2>إعدادات</h2><div class="row">
+    <div class="field" style="flex:2 1 200px"><label for="sname">اسم المحل</label><input id="sname" value="${esc(db.shop)}"></div>
+    <div class="field" style="flex:0 1 200px"><label for="slow">يعتبر "يحتاج شراء" لما الرصيد ≤</label><input id="slow" type="number" min="0" value="${db.low}"></div>
+    <button class="btn primary" data-act="savesettings">حفظ</button></div></section>
+  <section class="panel"><h2>نسخة احتياطية</h2>
+    <p class="muted" style="margin:0 0 8px">البيانات محفوظة في المتصفح على الجهاز ده فقط. خد نسخة احتياطية بشكل دوري، وخصوصًا قبل مسح بيانات المتصفح أو تغيير الموبايل. ${last}</p>
+    <div class="actions"><button class="btn primary" data-act="copybackup">نسخ بيانات النظام</button></div>
+    <p class="hint">الصق النص اللي اتنسخ في ملاحظات أو رسالة على واتساب لنفسك. وعشان تسترجع، الصق النص في الخانة اللي تحت.</p>
+    <h3>استرجاع نسخة</h3>
+    <textarea id="restoretxt" placeholder="الصق بيانات النسخة الاحتياطية هنا"></textarea>
+    <div class="actions"><input type="file" id="restorefile" accept=".json,application/json" style="max-width:260px"><button class="btn" data-act="restore">استرجاع</button></div>
+  </section>
+  <section class="panel"><h2>نسخ للصقها في إكسيل</h2><div class="actions">
+    <button class="btn" data-act="tsv" data-k="sales">المبيعات</button><button class="btn" data-act="tsv" data-k="purchases">المشتريات</button>
+    <button class="btn" data-act="tsv" data-k="expenses">المصروفات</button><button class="btn" data-act="tsv" data-k="stock">المخزون</button></div>
+    <textarea id="tsvout" readonly hidden style="margin-top:10px"></textarea></section>
+  <section class="panel"><h2>مسح كل شيء</h2><p class="muted" style="margin:0 0 8px">يرجّع النظام لبيانات ملف الإكسيل الأصلي ويمسح كل المبيعات والمشتريات والمصروفات.</p>
+    <button class="btn danger" data-act="reset">مسح كل المبيعات والمشتريات والرجوع للبداية</button></section>`;
+  $('#restorefile').addEventListener('change', e => {
+    const f = e.target.files[0]; if (!f) return;
+    const r = new FileReader(); r.onload = () => { $('#restoretxt').value = r.result; }; r.readAsText(f);
+  });
+}
+function tsv(k) {
+  const rows = [];
+  if (k === 'sales') { rows.push(['التاريخ', 'فاتورة', 'الكود', 'الصنف', 'الكمية', 'سعر البيع', 'الإجمالي', 'سعر الشراء']); db.sales.forEach(s => rows.push([s.date, s.inv, s.code, nameOf(s.code), s.qty, s.price, saleTotal(s), s.cost])); }
+  if (k === 'purchases') { rows.push(['التاريخ', 'الكود', 'الصنف', 'الكمية', 'سعر الشراء']); db.purchases.forEach(p => rows.push([p.date, p.code, nameOf(p.code), p.qty, p.cost])); }
+  if (k === 'expenses') { rows.push(['التاريخ', 'النوع', 'المبلغ', 'ملاحظة']); db.expenses.forEach(e => rows.push([e.date, e.type, e.amount, e.note || ''])); }
+  if (k === 'stock') { const sm = stockMap(); rows.push(['الكود', 'التصنيف', 'الصنف', 'سعر الشراء', 'سعر البيع', 'الرصيد', 'الحالة']); db.items.forEach(i => rows.push([i.code, i.cat, itemLabel(i), i.buy, i.sell, sm[i.code], statusTxt[status(sm[i.code])]])); }
+  return rows.map(r => r.map(c => String(c).replace(/[\t\n]/g, ' ')).join('\t')).join('\n');
+}
+
+/* ---------- actions ---------- */
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const act = b.dataset.act;
+  if (act === 'closemodal') { if (e.target === b) $('#layer').innerHTML = ''; return; }
+  if (act === 'tab') return go(b.dataset.k);
+  if (act === 'salecat') { saleCat = b.dataset.c; document.querySelectorAll('#cats .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.c === saleCat)); return renderResults(); }
+  if (act === 'add') {
+    const code = b.dataset.code, l = cart.find(x => x.code === code);
+    if (l) l.qty++; else cart.push({ code, qty: 1, price: itemBy(code).sell });
+    return renderCart();
+  }
+  if (act === 'qty') { const l = cart[+b.dataset.n]; l.qty = Math.max(1, l.qty + +b.dataset.d); return renderCart(); }
+  if (act === 'rmline') { cart.splice(+b.dataset.n, 1); return renderCart(); }
+  if (act === 'clearcart') { cart = []; return renderCart(); }
+  if (act === 'sell') {
+    if (!cart.length) return toast('الفاتورة فاضية');
+    const date = $('#sdate').value || today(), inv = uid();
+    cart.forEach(l => db.sales.push({ id: uid(), inv, date, code: l.code, qty: l.qty, price: +l.price || 0, cost: itemBy(l.code).buy }));
+    const sum = cart.reduce((a, l) => a + l.qty * l.price, 0);
+    cart = []; save(); toast('تم تسجيل البيع: ' + fmt(sum) + ' ج');
+    renderCart(); renderResults(); renderRecentSales(); return;
+  }
+  if (act === 'delsale') { if (!armed(b)) return; db.sales = db.sales.filter(s => s.inv !== b.dataset.inv); save(); toast('اتحذفت الفاتورة والرصيد رجع'); renderRecentSales(); return renderResults(); }
+  if (act === 'buy') {
+    const i = itemBy($('#pitem').value.split(' — ')[0].trim());
+    const qty = +$('#pqty').value, cost = +$('#pcost').value;
+    if (!i) return toast('اختار الصنف من القائمة');
+    if (!(qty > 0)) return toast('اكتب الكمية');
+    db.purchases.push({ id: uid(), date: $('#pdate').value || today(), code: i.code, qty, cost: cost || i.buy });
+    if ($('#pupd').checked && cost > 0) i.buy = cost;
+    save(); toast('تم تسجيل الشراء: ' + itemLabel(i));
+    $('#pitem').value = ''; $('#pqty').value = 1; $('#pcost').value = ''; return renderRecentPurchases();
+  }
+  if (act === 'delbuy') { if (!armed(b)) return; db.purchases = db.purchases.filter(p => p.id !== b.dataset.id); save(); return renderRecentPurchases(); }
+  if (act === 'newitem') return itemForm(null);
+  if (act === 'edititem') return itemForm(itemBy(b.dataset.code));
+  if (act === 'saveitem') {
+    const v = id => $('#f_' + id).value.trim();
+    const isNew = b.dataset.new === '1';
+    const it = { code: v('code'), cat: v('cat'), name: v('name'), model: v('model'), size: v('size'), color: v('color'), unit: 'قطعة', buy: +v('buy') || 0, sell: +v('sell') || 0, open: +v('open') || 0 };
+    if (!it.code || !it.name) return toast('الكود والاسم مطلوبين');
+    if (isNew) { if (itemBy(it.code)) return toast('الكود ده موجود قبل كده'); db.items.push(it); }
+    else Object.assign(itemBy(it.code), it);
+    save(); $('#layer').innerHTML = ''; toast('تم الحفظ'); return renderStockRows();
+  }
+  if (act === 'delitem') {
+    const c = b.dataset.code;
+    if (db.sales.some(s => s.code === c) || db.purchases.some(p => p.code === c)) return toast('الصنف عليه حركة بيع أو شراء، مينفعش يتحذف');
+    if (!armed(b)) return;
+    db.items = db.items.filter(i => i.code !== c); save(); $('#layer').innerHTML = ''; return renderStockRows();
+  }
+  if (act === 'addexp') {
+    const amount = +$('#eamt').value; if (!(amount > 0)) return toast('اكتب المبلغ');
+    const date = $('#edate').value || today();
+    db.expenses.push({ id: uid(), date, type: $('#etype').value, amount, note: $('#enote').value.trim() });
+    expMonth = date.slice(0, 7); $('#emonth').value = expMonth;
+    save(); $('#eamt').value = ''; $('#enote').value = ''; toast('تم تسجيل المصروف'); return renderExpenses();
+  }
+  if (act === 'delexp') { if (!armed(b)) return; db.expenses = db.expenses.filter(x => x.id !== b.dataset.id); save(); return renderExpenses(); }
+  if (act === 'savesettings') { db.shop = $('#sname').value.trim() || db.shop; db.low = Math.max(0, +$('#slow').value || 0); save(); return toast('تم الحفظ'); }
+  if (act === 'copybackup') {
+    const txt = JSON.stringify(db);
+    db.lastBackup = today(); save();
+    if (await copyText(txt, 'تم نسخ بيانات النظام')) return viewSettings();
+    $('#restoretxt').value = txt; $('#restoretxt').select(); return toast('انسخ النص من الخانة اللي تحت');
+  }
+  if (act === 'restore') {
+    const t = $('#restoretxt').value.trim(); if (!t) return toast('الصق النسخة الأول');
+    let d; try { d = JSON.parse(t); } catch (err) { return toast('النص مش نسخة صحيحة'); }
+    if (!d || !Array.isArray(d.items) || !Array.isArray(d.sales)) return toast('النص مش نسخة صحيحة');
+    if (!armed(b, 'هتستبدل البيانات الحالية، اضغط للتأكيد')) return;
+    db = Object.assign(fresh(), d); save(); toast('تم الاسترجاع'); return go('settings');
+  }
+  if (act === 'tsv') {
+    const txt = tsv(b.dataset.k);
+    if (await copyText(txt, 'تم النسخ، الصقه في إكسيل')) return;
+    const o = $('#tsvout'); o.hidden = false; o.value = txt; o.select(); return toast('انسخ النص من الخانة');
+  }
+  if (act === 'reset') {
+    if (!armed(b, 'متأكد؟ اضغط تاني')) return;
+    db = fresh(); cart = []; save(); toast('رجع النظام للبداية'); return go('sales');
+  }
+});
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset.actInput === 'price') { cart[+t.dataset.n].price = +t.value || 0; renderCart(); }
+});
+
+renderTabs(); refreshHeader(); go('sales');
+</script>
+
+</body></html>
